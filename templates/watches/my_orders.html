@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}My Orders — SECONDS{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>My Orders</h1>
+    <p>Track your watch reservations and delivery status.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'watch_list' %}">Browse Watches</a>
+</div>
+
+{% if orders %}
+<div style="display:flex;flex-direction:column;gap:1.1rem;">
+  {% for order in orders %}
+  <div class="card">
+    <div style="padding:0.9rem 1.35rem;background:var(--cream);border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:0.85rem;flex-wrap:wrap;">
+        <span style="font-family:var(--font-sans);font-size:1rem;font-weight:800;color:var(--slate);background:var(--cream-dark);border:1.5px solid var(--border);border-radius:7px;padding:0.2rem 0.7rem;letter-spacing:0.06em;">{{ order.order_id }}</span>
+        <span style="font-size:0.92rem;color:var(--text-soft);">{{ order.created_at|date:"M d, Y · g:i A" }}</span>
+      </div>
+      <span class="badge {% if order.status == 'delivered' %}badge-success{% elif order.status == 'pending' %}badge-warning{% elif order.status == 'rejected' or order.status == 'cancelled' %}badge-danger{% else %}badge-info{% endif %}" style="font-size:0.88rem;padding:0.32rem 0.8rem;">
+        {{ order.get_status_display }}
+      </span>
+    </div>
+    <div class="card-body">
+      <div style="display:flex;gap:1.15rem;flex-wrap:wrap;align-items:flex-start;">
+        <div style="flex-shrink:0;">
+          {% if order.watch_item.image %}
+            <img src="{{ order.watch_item.image.url }}" alt="{{ order.watch_item.name }}" style="width:85px;height:85px;border-radius:var(--radius);object-fit:cover;border:1.5px solid var(--border);"/>
+          {% else %}
+            <div style="width:85px;height:85px;border-radius:var(--radius);background:var(--cream-dark);display:flex;align-items:center;justify-content:center;font-size:2.2rem;">⌚</div>
+          {% endif %}
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <h3 style="font-family:var(--font-serif);font-size:1.25rem;color:var(--slate);margin-bottom:0.55rem;">{{ order.watch_item.name }}</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.4rem 1rem;font-size:1rem;color:var(--text-mid);margin-bottom:0.75rem;">
+            <div><span style="color:var(--text-soft);">Payment:</span> {{ order.get_payment_method_display }}</div>
+            <div><span style="color:var(--text-soft);">Option:</span> {{ order.get_delivery_option_display }}</div>
+            <div><span style="color:var(--text-soft);">Watch:</span> ₱{{ order.watch_item.price|floatformat:2 }}</div>
+            <div><span style="color:var(--text-soft);">Delivery:</span> ₱{{ order.delivery_fee|floatformat:2 }}</div>
+            <div style="grid-column:1/-1;"><span style="color:var(--text-soft);">Total:</span> <strong style="color:var(--gold-dark);font-size:1.1rem;">₱{{ order.total_amount|floatformat:2 }}</strong></div>
+          </div>
+          {% if order.gcash_ref_number %}<div style="font-size:0.95rem;color:var(--text-soft);">GCash Ref: <strong>{{ order.gcash_ref_number }}</strong></div>{% endif %}
+          {% if order.delivery_address %}<div style="font-size:0.95rem;color:var(--text-soft);margin-top:0.25rem;">📍 {{ order.delivery_address }}</div>{% endif %}
+          {% if order.notes %}<div style="font-size:0.95rem;color:var(--text-soft);margin-top:0.25rem;font-style:italic;">💬 {{ order.notes }}</div>{% endif %}
+          {% if order.admin_note %}
+          <div style="background:rgba(26,95,160,0.08);border:1.5px solid rgba(26,95,160,0.2);border-radius:var(--radius);padding:0.65rem 0.9rem;margin-top:0.65rem;font-size:1rem;color:var(--info);">
+            📝 Store note: {{ order.admin_note }}
+          </div>
+          {% endif %}
+        </div>
+        <div style="flex-shrink:0;display:flex;flex-direction:column;gap:0.45rem;">
+          {% if order.status == 'pending' %}
+            <form method="post" action="{% url 'order_cancel' order.pk %}" onsubmit="return confirm('Cancel this order?')">
+              {% csrf_token %}<button type="submit" class="btn btn-danger btn-sm">Cancel Order</button>
+            </form>
+          {% endif %}
+          <a class="btn btn-ghost btn-sm" href="{% url 'watch_detail' order.watch_item.pk %}">View Watch</a>
+        </div>
+      </div>
+
+      <!-- Delivery Timeline -->
+      {% if order.status != 'rejected' and order.status != 'cancelled' %}
+      <div style="margin-top:1.15rem;padding-top:1.1rem;border-top:1.5px solid var(--cream-dark);">
+        <div style="font-size:0.82rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-soft);margin-bottom:0.85rem;">Order Progress</div>
+        <div class="timeline">
+          {% for step in order.status_steps %}
+          {% with step_idx=forloop.counter0 cur_idx=order.current_step_index %}
+          <div class="timeline-step {% if step_idx < cur_idx %}done{% elif step_idx == cur_idx %}current{% endif %}">
+            <div class="timeline-dot">{% if step_idx < cur_idx %}✔{% elif step_idx == cur_idx %}●{% else %}○{% endif %}</div>
+            <div class="timeline-label">
+              {% if step == 'pending' %}Pending{% elif step == 'verified' %}Verified{% elif step == 'preparing' %}Preparing{% elif step == 'out_for_delivery' %}On the Way{% elif step == 'ready_for_pickup' %}Ready{% elif step == 'delivered' %}Done{% endif %}
+            </div>
+          </div>
+          {% endwith %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="icon">📦</div>
+  <h3>No Orders Yet</h3>
+  <p>You haven't reserved any watches yet. Browse our catalog to find your next timepiece.</p>
+  <a class="btn btn-primary" href="{% url 'watch_list' %}">Browse Watches</a>
+</div>
+{% endif %}
+{% endblock %}

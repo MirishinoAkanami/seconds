@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Register — SECONDS{% endblock %}
+{% block content %}
+<div style="min-height:82vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem;">
+  <div style="width:100%;max-width:460px;">
+    <div class="card">
+      <div class="card-body" style="padding:2.25rem;">
+        <div style="text-align:center;margin-bottom:1.75rem;">
+          {% include 'includes/logo_svg.html' with size="64" %}
+          <h1 style="font-family:var(--font-serif);font-size:2rem;color:var(--slate);">Create Account</h1>
+          <p style="font-size:1rem;color:var(--text-soft);margin-top:0.25rem;">Join SECONDS today</p>
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="form-group">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}{% for err in field.errors %}<div style="font-size:0.88rem;color:var(--danger);margin-top:0.25rem;">{{ err }}</div>{% endfor %}{% endif %}
+            {% if field.help_text %}<div class="form-hint">{{ field.help_text }}</div>{% endif %}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary btn-lg btn-block" style="margin-top:0.5rem;">Create Account</button>
+        </form>
+        <p class="text-center mt-2" style="font-size:1rem;color:var(--text-soft);">
+          Already have one? <a href="{% url 'login' %}" style="color:var(--gold-dark);font-weight:700;">Login</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

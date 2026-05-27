@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile — SECONDS{% endblock %}
+{% block content %}
+<div class="form-page">
+  <div class="page-header">
+    <div class="page-header-text"><h1>Edit Profile</h1><p>Update your personal information.</p></div>
+    <a class="btn btn-ghost" href="{% url 'profile' %}">← Cancel</a>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Profile Picture</label>
+          {% if user.profile_picture %}
+          <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.9rem;">
+            <img src="{{ user.profile_picture.url }}" style="width:65px;height:65px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);"/>
+            <span style="font-size:0.95rem;color:var(--text-soft);">Upload a new photo to replace current.</span>
+          </div>
+          {% endif %}
+          <div class="img-upload-zone">
+            <input type="file" name="profile_picture" accept="image/*"/>
+            <div class="img-upload-icon">👤</div>
+            <div class="img-upload-text"><strong>Click to upload photo</strong></div>
+          </div>
+          <div class="img-preview-wrap"><img src="" alt="Preview" style="border-radius:50%;width:90px;height:90px;object-fit:cover;"/></div>
+        </div>
+        {% for field in form %}
+          {% if field.name != 'profile_picture' %}
+          <div class="form-group">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}{% for err in field.errors %}<div style="font-size:0.88rem;color:var(--danger);margin-top:0.25rem;">{{ err }}</div>{% endfor %}{% endif %}
+          </div>
+          {% endif %}
+        {% endfor %}
+        <div class="flex gap-2 mt-2">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <a class="btn btn-ghost" href="{% url 'profile' %}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

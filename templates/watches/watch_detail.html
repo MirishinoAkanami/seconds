@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}{{ item.name }} — SECONDS{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <div class="mb-2">
+    <a class="btn btn-ghost btn-sm" href="{% url 'watch_list' %}">← Back to Catalog</a>
+  </div>
+
+  <div class="grid grid-2" style="gap:1.75rem;align-items:start;">
+    <!-- Image -->
+    <div>
+      <div style="border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);background:var(--cream-dark);aspect-ratio:1;display:flex;align-items:center;justify-content:center;">
+        {% if item.image %}
+          <img src="{{ item.image.url }}" alt="{{ item.name }}" style="width:100%;height:100%;object-fit:cover;"/>
+        {% else %}
+          <div style="font-size:6rem;color:var(--text-soft);">⌚</div>
+        {% endif %}
+      </div>
+
+      <!-- Share (admin only) -->
+      {% if is_admin_user and store.facebook_page_url %}
+      <div style="display:flex;gap:0.65rem;margin-top:0.85rem;flex-wrap:wrap;">
+        <a class="btn btn-secondary" href="{{ fb_share_url }}" target="_blank" rel="noopener" style="flex:1;justify-content:center;">🔵 Share on Facebook</a>
+        <button onclick="copyLink()" class="btn btn-ghost" style="flex:1;justify-content:center;" id="copyBtn">🔗 Copy Link</button>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Info -->
+    <div>
+      {% if item.brand %}
+        <div style="font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:var(--gold-dark);margin-bottom:0.35rem;">{{ item.brand }}</div>
+      {% endif %}
+      <h1 style="font-family:var(--font-serif);font-size:1.85rem;color:var(--slate);line-height:1.2;margin-bottom:0.65rem;">{{ item.name }}</h1>
+
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+        <span class="badge badge-slate">{{ item.get_condition_display }}</span>
+        {% if item.is_out_of_stock %}<span class="badge badge-danger">Out of Stock</span>
+        {% elif item.is_available %}<span class="badge badge-success">Available</span>{% endif %}
+        {% if is_admin_user and item.is_low_stock %}<span class="badge badge-warning">Low Stock</span>{% endif %}
+      </div>
+
+      <div style="font-size:2.1rem;font-weight:800;color:var(--gold-dark);margin-bottom:1.1rem;font-family:var(--font-serif);">
+        ₱{{ item.price|floatformat:2 }}
+      </div>
+
+      {% if item.description %}
+      <div style="background:var(--cream);border-radius:var(--radius);padding:1rem;margin-bottom:1.1rem;font-size:0.95rem;color:var(--text-mid);line-height:1.65;border:1px solid var(--border);">
+        {{ item.description|linebreaks }}
+      </div>
+      {% endif %}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;margin-bottom:1.25rem;">
+        <div style="background:var(--cream);border-radius:var(--radius);padding:0.8rem;border:1px solid var(--border);">
+          <div class="form-label">Stock</div>
+          <div style="font-size:1.05rem;font-weight:800;color:var(--slate);">{{ item.stock_quantity }} unit{{ item.stock_quantity|pluralize }}</div>
+        </div>
+        <div style="background:var(--cream);border-radius:var(--radius);padding:0.8rem;border:1px solid var(--border);">
+          <div class="form-label">Delivery Fee</div>
+          <div style="font-size:1.05rem;font-weight:800;color:var(--slate);">₱{{ store.delivery_fee|floatformat:2 }}</div>
+        </div>
+      </div>
+
+      {% if is_admin_user %}
+        <div class="flex gap-2">
+          <a class="btn btn-primary" href="{% url 'watch_edit' item.pk %}">Edit Watch</a>
+          <form method="post" action="{% url 'watch_delete' item.pk %}" onsubmit="return confirm('Delete this watch?')">
+            {% csrf_token %}<button class="btn btn-danger" type="submit">Delete</button>
+          </form>
+        </div>
+      {% elif user.is_authenticated %}
+        {% if not item.is_out_of_stock and item.is_available %}
+          <a class="btn btn-primary btn-lg btn-block" href="{% url 'order_create' item.pk %}">⌚ Reserve This Watch</a>
+          <p style="font-size:0.8rem;color:var(--text-soft);margin-top:0.5rem;text-align:center;">
+            Pay via GCash ({{ store.gcash_number }}) or at the store.
+          </p>
+        {% else %}
+          <div style="background:rgba(184,134,11,0.1);border:1px solid var(--warning);border-radius:var(--radius);padding:0.9rem;font-size:0.92rem;color:var(--warning);font-weight:600;">
+            This watch is currently unavailable for reservation.
+          </div>
+        {% endif %}
+      {% else %}
+        <a class="btn btn-primary btn-lg btn-block" href="{% url 'login' %}?next={% url 'watch_detail' item.pk %}">Login to Reserve</a>
+      {% endif %}
+
+      <!-- Store Info -->
+      <div style="margin-top:1.25rem;padding:0.9rem;background:var(--cream);border-radius:var(--radius);border:1px solid var(--border);font-size:0.88rem;color:var(--text-mid);">
+        <div style="font-weight:800;color:var(--slate);margin-bottom:0.3rem;">📍 {{ store.store_name }}</div>
+        <div>{{ store.delivery_area }}</div>
+        <div>{{ store.store_hours }}</div>
+        <div style="margin-top:0.3rem;">GCash: <strong>{{ store.gcash_number }}</strong> ({{ store.gcash_name }})</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related -->
+  {% if related %}
+  <h2 class="section-title mt-3">Similar Watches</h2>
+  <div class="grid grid-4">
+    {% for rel in related %}
+    <div class="watch-card">
+      <div class="watch-card-img">
+        {% if rel.image %}<img src="{{ rel.image.url }}" alt="{{ rel.name }}"/>
+        {% else %}<div class="no-img">⌚</div>{% endif %}
+      </div>
+      <div class="watch-card-body">
+        {% if rel.brand %}<div class="watch-card-brand">{{ rel.brand }}</div>{% endif %}
+        <div class="watch-card-name">{{ rel.name }}</div>
+        <div class="watch-card-price">₱{{ rel.price|floatformat:2 }}</div>
+      </div>
+      <div class="watch-card-footer">
+        <a class="btn btn-secondary btn-sm" href="{% url 'watch_detail' rel.pk %}" style="flex:1;justify-content:center;">View</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+function copyLink() {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✔ Copied!';
+    setTimeout(() => { btn.textContent = '🔗 Copy Link'; }, 2500);
+  });
+}
+</script>
+{% endblock %}
+{% endblock %}

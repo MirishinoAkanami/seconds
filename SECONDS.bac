@@ -1,0 +1,179 @@
+# ============================================================
+# SECONDS — System Backup Reference
+# Version: 3.3
+# Store: EJ&ELLA Store
+# ============================================================
+
+## PROJECT STRUCTURE
+seconds/
+├── core/               → Settings, root URLs, wsgi
+├── accounts/           → Auth, users, announcements, orders mgmt, AI chat, store settings
+│   ├── models.py       → CustomUser, Announcement, StoreSettings, DEFAULT_AI_KNOWLEDGE
+│   ├── views.py        → login, register, dashboard, profile, orders, AI chat (watch-only)
+│   ├── urls.py
+│   ├── forms.py
+│   ├── context_processors.py
+│   └── admin.py
+├── watches/            → Watch catalog, reservations, delivery tracking, sales stats
+│   ├── models.py       → WatchItem, Order (with order_id, delivery timeline)
+│   ├── views.py        → catalog, CRUD, order create/cancel, sales_stats
+│   ├── urls.py
+│   └── forms.py
+├── inventory/          → Sari-sari items, stock logs
+│   ├── models.py       → SariItem (with image), StockLog
+│   ├── views.py        → list, add, edit, delete, quick_stock_update
+│   ├── urls.py
+│   └── forms.py
+├── templates/
+│   ├── base.html       → Animated logo, grandfather AI avatar, nav dropdown, toasts
+│   ├── accounts/
+│   │   ├── guest_home.html
+│   │   ├── login.html / register.html / agreement.html / confirm_logout.html
+│   │   ├── dashboard_admin.html  → left sidebar (stats btn + 4 metrics)
+│   │   ├── dashboard_user.html   → 3-col (notice | watches | orders)
+│   │   ├── profile.html / profile_edit.html
+│   │   ├── announcement_form.html
+│   │   ├── store_settings.html   → left tab nav + Reset to Default button
+│   │   └── orders.html           → sidebar filters + search + order_id cards
+│   ├── watches/
+│   │   ├── watch_list.html / watch_detail.html
+│   │   ├── watch_form.html (centered)
+│   │   ├── watch_confirm_delete.html
+│   │   ├── order_form.html / my_orders.html (with timeline + order_id)
+│   │   └── sales_stats.html → left sidebar 8 metrics + middle orders + right charts
+│   └── inventory/
+│       ├── inventory_list.html → left sidebar (metrics + filters)
+│       ├── item_form.html (centered)
+│       └── item_confirm_delete.html
+├── static/
+├── media/
+├── manage.py
+├── requirements.txt
+└── SECONDS.bac
+
+## KEY FEATURES PER VERSION
+
+### v1.0 — Initial build
+- Django 3-app structure: accounts, watches, inventory
+- Watch catalog, GCash orders, sari-sari inventory, announcements
+
+### v2.0 — Major rebuild
+- AI Store Assistant (Anthropic API)
+- Sales Statistics page
+- Delivery Status Timeline (user-facing)
+- Inventory images
+- Left-floating toast notifications
+- Order unique IDs (ORD-XXXXXXXX)
+
+### v2.1 — UI restructure
+- Left sidebar on admin dashboard, inventory, stats pages
+- Profile dropdown in nav
+- Gear icon for settings
+- Settings tabbed (left-side nav)
+- User dashboard: 3-column layout
+- Order Management: sidebar filters + search
+
+### v2.2 — Size & design
+- Base font 18px, all elements scaled up
+- Animated watch logo in nav bar
+- Grandfather clock AI avatar (animated eyes, mustache hands, gears, pendulum)
+- Form pages centered (max-width 680px)
+- Order cards with ORD-ID badge
+
+### v3.0 — AI knowledge & logo
+- Logo size increased: 54px, SECONDS text 2.15rem, nav-h 70px
+- Logo has gold drop shadow glow
+- DEFAULT_AI_KNOWLEDGE constant in accounts/models.py
+- Pre-written generic watch shop FAQs auto-populate on first run
+- AI strictly restricted: NEVER reveals sari-sari inventory to customers
+- Store Settings AI tab: editable textarea pre-filled with default
+- "Reset to Default" button restores the template
+- get_ai_knowledge() method falls back to default if field is empty
+
+## AI ASSISTANT RULES (built into system prompt)
+1. Only answers watch, watch service, ordering, GCash, delivery, store info questions
+2. NEVER reveals sari-sari inventory — stock, prices, availability
+3. Responds in customer's language (Filipino or English)
+4. Does not make up prices not in knowledge base
+5. Suggests store contact if unsure
+
+## DEFAULT AI KNOWLEDGE LOCATION
+File: accounts/models.py
+Constant: DEFAULT_AI_KNOWLEDGE
+Auto-populates StoreSettings.ai_store_info on first run via get_settings()
+Admin can edit in Store Settings → AI Assistant tab
+Admin can reset to default via "Reset to Default" button
+
+## SETUP (fresh install)
+1. python -m venv venv
+2. venv\Scripts\activate  (Windows) / source venv/bin/activate (Mac/Linux)
+3. pip install -r requirements.txt
+4. python manage.py migrate
+5. python manage.py createsuperuser
+6. python manage.py runserver
+→ http://127.0.0.1:8000
+
+## FIRST-RUN CHECKLIST
+□ Login as superuser
+□ Store Settings → Store Info: fill in store name, hours, address, Facebook URL
+□ Store Settings → GCash & Delivery: fill in GCash number, name, fee, area
+□ Store Settings → AI Assistant: fill in [price] placeholders with actual prices
+□ Add watches in /watches/add/
+□ Add sari-sari items in /inventory/add/
+□ Post first announcement from dashboard
+
+## UPDATE FORMAT
+Minor  → SECONDS vers. 3.#  (e.g. 3.1, 3.2)
+Major  → SECONDS vers. #.0  (e.g. 4.0)
+
+### v3.1 — AI fix + logo on auth pages + FAQ update
+- FIXED: AI assistant now works correctly using anthropic Python SDK
+- FIXED: API key is stored in StoreSettings.anthropic_api_key (admin sets it in Store Settings → AI Assistant)
+- FIXED: AI uses the actual FAQ from database — responses now reflect updates to knowledge base
+- AI gives helpful error messages if key is missing or invalid instead of generic failure
+- AI handles off-topic questions gracefully (tells user it can only help with store questions)
+- ADDED: Anthropic API key field in Store Settings → AI Assistant tab (password input, never shown in plain text)
+- CHANGED: Login, Register, Agreement, Logout pages now show animated SECONDS watch SVG logo instead of ⌚ emoji
+- CHANGED: Logo is a reusable include at templates/includes/logo_svg.html (use anywhere with {% include 'includes/logo_svg.html' with size="64" %})
+- UPDATED: DEFAULT_AI_KNOWLEDGE FAQ rewritten with:
+  - Price ranges (₱130-340 battery, ₱140-200 straps, etc.) instead of [price] placeholders
+  - Clear note that ALL prices are estimates varying by brand/model/condition
+  - Wall clock repair note: varies by type (quartz, pendulum, chime, cuckoo, antique)
+  - Layaway: No
+  - Buy second-hand watches: Yes
+  - Brands: depends on availability
+  - Repair price FAQ answer improved
+- ADDED: anthropic package to requirements.txt
+
+## HOW TO SET UP THE AI ASSISTANT
+1. Get a free API key from https://console.anthropic.com → API Keys
+2. In SECONDS, go to Store Settings → AI Assistant tab
+3. Paste your API key in the "Anthropic API Key" field
+4. Click "Save AI Knowledge"
+5. The AI chat button will now work for all users
+
+### v3.3 — Gemini API key fix
+- FIXED: Better error messages for Gemini API errors
+- FIXED: "Host not in allowlist" error is now caught and gives admin clear instructions
+
+## HOW TO FIX "Host not in allowlist" ERROR
+This happens when your Gemini API key has Application Restrictions enabled.
+Fix steps:
+1. Go to https://aistudio.google.com/app/apikey
+2. Find your API key and click the edit/pencil icon
+3. Under "Application restrictions" — select "None"
+4. Under "API restrictions" — select "Don't restrict key" (or ensure Generative Language API is allowed)
+5. Click Save
+6. Wait 1-2 minutes for the change to take effect
+7. Test the AI chat again — it should work now
+
+## HOW TO SET UP GEMINI API KEY (full steps)
+1. Go to https://aistudio.google.com/app/apikey
+2. Click "Create API Key"
+3. Select a Google Cloud project (or create one — it's free)
+4. Copy the key (starts with AIza...)
+5. IMPORTANT: Click the edit icon on the key
+6. Set Application restrictions to "None"
+7. Set API restrictions to "Don't restrict key"
+8. Save
+9. In SECONDS: Store Settings > AI Assistant > paste the key > Save AI Knowledge

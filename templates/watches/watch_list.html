@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Watches — SECONDS{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <div class="page-header">
+    <div class="page-header-text">
+      <h1>Watch Catalog</h1>
+      <p>Browse timepieces for sale. Reserve via GCash or pick up at the store.</p>
+    </div>
+    {% if is_admin_user %}
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+      <a class="btn btn-primary" href="{% url 'watch_add' %}">+ Add Watch</a>
+      {% if store.facebook_page_url %}
+      <a class="btn btn-ghost" href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" rel="noopener">🔵 Share Page</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Filters -->
+  <form method="get" style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center;background:var(--white);padding:0.85rem 1rem;border-radius:var(--radius-lg);border:1px solid var(--border);">
+    <input type="text" name="q" class="form-input" value="{{ query }}" placeholder="Search by name or brand…" style="max-width:210px;"/>
+    <select name="condition" class="form-input" style="max-width:175px;">
+      <option value="">All Conditions</option>
+      {% for val, label in condition_choices %}
+        <option value="{{ val }}" {% if condition_filter == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="sort" class="form-input" style="max-width:175px;">
+      <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest First</option>
+      <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+      <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low → High</option>
+      <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High → Low</option>
+      <option value="name" {% if sort == 'name' %}selected{% endif %}>Name A–Z</option>
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    {% if query or condition_filter %}<a class="btn btn-ghost" href="{% url 'watch_list' %}">Clear</a>{% endif %}
+  </form>
+
+  {% if items %}
+  <div class="grid grid-4">
+    {% for item in items %}
+    <div class="watch-card">
+      <div class="watch-card-img">
+        {% if item.image %}<img src="{{ item.image.url }}" alt="{{ item.name }}"/>
+        {% else %}<div class="no-img">⌚</div>{% endif %}
+        <div style="position:absolute;top:0.5rem;left:0.5rem;">
+          <span class="badge badge-slate">{{ item.get_condition_display }}</span>
+        </div>
+        {% if is_admin_user and item.is_low_stock %}
+          <div style="position:absolute;top:0.5rem;right:0.5rem;">
+            <span class="badge badge-warning">Low</span>
+          </div>
+        {% endif %}
+        {% if item.is_out_of_stock %}
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;">
+            <span style="color:var(--white);font-weight:800;font-size:0.95rem;letter-spacing:0.1em;">SOLD OUT</span>
+          </div>
+        {% endif %}
+      </div>
+      <div class="watch-card-body">
+        {% if item.brand %}<div class="watch-card-brand">{{ item.brand }}</div>{% endif %}
+        <div class="watch-card-name">{{ item.name }}</div>
+        {% if item.description %}<div style="font-size:0.8rem;color:var(--text-soft);">{{ item.description|truncatechars:65 }}</div>{% endif %}
+        <div class="watch-card-price">₱{{ item.price|floatformat:2 }}</div>
+      </div>
+      <div class="watch-card-footer">
+        <a class="btn btn-secondary btn-sm" href="{% url 'watch_detail' item.pk %}" style="flex:1;justify-content:center;">Details</a>
+        {% if is_admin_user %}
+          <a class="btn btn-ghost btn-sm" href="{% url 'watch_edit' item.pk %}">Edit</a>
+        {% elif user.is_authenticated and not item.is_out_of_stock %}
+          <a class="btn btn-primary btn-sm" href="{% url 'order_create' item.pk %}">Reserve</a>
+        {% elif not user.is_authenticated and not item.is_out_of_stock %}
+          <a class="btn btn-primary btn-sm" href="{% url 'login' %}?next={% url 'watch_detail' item.pk %}">Reserve</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">⌚</div>
+    <h3>No Watches Found</h3>
+    <p>{% if query %}No results for "{{ query }}". Try a different search.{% else %}No watches available right now. Check back soon!{% endif %}</p>
+    {% if query %}<a class="btn btn-primary" href="{% url 'watch_list' %}">Browse All</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

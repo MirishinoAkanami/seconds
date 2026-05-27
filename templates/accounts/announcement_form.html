@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — SECONDS{% endblock %}
+{% block content %}
+<div class="form-page">
+  <div class="page-header">
+    <div class="page-header-text"><h1>{{ title }}</h1></div>
+    <a class="btn btn-ghost" href="{% url 'dashboard' %}">← Cancel</a>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input type="text" name="title" class="form-input" value="{{ ann.title|default:'' }}" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Content</label>
+          <textarea name="content" class="form-input" rows="6" required>{{ ann.content|default:'' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Image (optional)</label>
+          {% if ann.image %}
+          <div style="margin-bottom:0.75rem;"><img src="{{ ann.image.url }}" style="height:80px;border-radius:var(--radius);border:1.5px solid var(--border);object-fit:cover;"/></div>
+          {% endif %}
+          <div class="img-upload-zone">
+            <input type="file" name="image" accept="image/*"/>
+            <div class="img-upload-icon">🖼</div>
+            <div class="img-upload-text"><strong>Click to upload image</strong></div>
+          </div>
+          <div class="img-preview-wrap"><img src="" alt="Preview"/></div>
+        </div>
+        <div class="form-group">
+          <label class="form-check">
+            <input type="checkbox" name="is_pinned" {% if ann.is_pinned %}checked{% endif %}/>
+            <span style="font-size:1rem;">📌 Pin this announcement (shows at top)</span>
+          </label>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button type="submit" class="btn btn-primary btn-lg">{% if ann %}Update{% else %}Post{% endif %} Announcement</button>
+          <a class="btn btn-ghost" href="{% url 'dashboard' %}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

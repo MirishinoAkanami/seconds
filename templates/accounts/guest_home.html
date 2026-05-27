@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}SECONDS — Watches & Sari-Sari Store{% endblock %}
+{% block content %}
+
+<!-- Hero -->
+<section style="background:linear-gradient(135deg,var(--slate) 55%,var(--slate-mid));color:var(--white);padding:3.5rem 1.5rem;">
+  <div style="max-width:860px;margin:0 auto;text-align:center;">
+    <div style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.2em;color:var(--gold-light);margin-bottom:0.6rem;font-weight:800;">⌚ EJ&amp;ELLA Store</div>
+    <h1 style="font-family:var(--font-serif);font-size:clamp(2rem,5vw,3.2rem);color:var(--white);line-height:1.15;margin-bottom:0.85rem;">
+      Every Second <span style="color:var(--gold-light);">Counts.</span>
+    </h1>
+    <p style="font-size:1.05rem;color:rgba(255,255,255,0.72);max-width:500px;margin:0 auto 1.75rem;">
+      Quality watches for sale &amp; daily essentials — all in one place.
+    </p>
+    <div style="display:flex;gap:0.85rem;justify-content:center;flex-wrap:wrap;">
+      <a class="btn btn-primary btn-lg" href="{% url 'watch_list' %}">Browse Watches</a>
+      <a class="btn btn-lg" href="{% url 'register' %}" style="background:rgba(255,255,255,0.12);color:var(--white);border:1.5px solid rgba(255,255,255,0.3);">Create Account</a>
+    </div>
+  </div>
+</section>
+
+<div class="page-wrap">
+
+  <!-- Featured Watches -->
+  {% if watches %}
+  <h2 class="section-title">Available Watches</h2>
+  <div class="grid grid-3">
+    {% for item in watches %}
+    <div class="watch-card">
+      <div class="watch-card-img">
+        {% if item.image %}<img src="{{ item.image.url }}" alt="{{ item.name }}"/>
+        {% else %}<div class="no-img">⌚</div>{% endif %}
+        <div style="position:absolute;top:0.5rem;left:0.5rem;">
+          <span class="badge badge-slate">{{ item.get_condition_display }}</span>
+        </div>
+      </div>
+      <div class="watch-card-body">
+        {% if item.brand %}<div class="watch-card-brand">{{ item.brand }}</div>{% endif %}
+        <div class="watch-card-name">{{ item.name }}</div>
+        {% if item.description %}<div style="font-size:0.82rem;color:var(--text-soft);">{{ item.description|truncatechars:60 }}</div>{% endif %}
+        <div class="watch-card-price">₱{{ item.price|floatformat:2 }}</div>
+      </div>
+      <div class="watch-card-footer">
+        <a class="btn btn-secondary btn-sm" href="{% url 'watch_detail' item.pk %}" style="flex:1;justify-content:center;">View Details</a>
+        <a class="btn btn-ghost btn-sm" href="{% url 'login' %}">Reserve</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="text-center mt-2">
+    <a class="btn btn-primary" href="{% url 'watch_list' %}">View All Watches →</a>
+  </div>
+  {% endif %}
+
+  <!-- Store Info -->
+  <h2 class="section-title mt-3">Store Info</h2>
+  <div class="grid grid-3">
+    <div class="metric-card accent-gold">
+      <div class="metric-label">Store Hours</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--slate);margin-top:0.2rem;">{{ store.store_hours }}</div>
+    </div>
+    <div class="metric-card accent-info">
+      <div class="metric-label">Delivery Area</div>
+      <div style="font-size:0.95rem;color:var(--text-mid);margin-top:0.2rem;">{{ store.delivery_area }}</div>
+    </div>
+    <div class="metric-card accent-success">
+      <div class="metric-label">GCash Payment</div>
+      <div style="font-size:1.1rem;font-weight:800;color:var(--slate);margin-top:0.2rem;">{{ store.gcash_number }}</div>
+      <div class="metric-sub">{{ store.gcash_name }}</div>
+    </div>
+  </div>
+
+  <!-- Announcements -->
+  {% if announcements %}
+  <h2 class="section-title mt-3">📢 Notice Board</h2>
+  <div class="grid grid-2">
+    {% for ann in announcements %}
+    <div class="card">
+      <div class="card-body">
+        <div class="flex-between mb-1" style="gap:0.5rem;">
+          <h3 style="font-family:var(--font-serif);font-size:1.05rem;color:var(--slate);">
+            {% if ann.is_pinned %}<span style="color:var(--gold-dark);">📌 </span>{% endif %}{{ ann.title }}
+          </h3>
+          <span style="font-size:0.76rem;color:var(--text-soft);flex-shrink:0;">{{ ann.created_at|date:"M d, Y" }}</span>
+        </div>
+        <p style="font-size:0.92rem;color:var(--text-mid);line-height:1.55;">{{ ann.content|truncatechars:160 }}</p>
+        {% if ann.image %}
+          <img src="{{ ann.image.url }}" alt="{{ ann.title }}" style="width:100%;border-radius:var(--radius);margin-top:0.75rem;max-height:160px;object-fit:cover;"/>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- CTA -->
+  <div class="card mt-3" style="background:linear-gradient(135deg,var(--slate),var(--slate-mid));border:none;">
+    <div class="card-body text-center" style="padding:2.25rem;">
+      <h2 style="font-family:var(--font-serif);font-size:1.6rem;color:var(--gold-light);margin-bottom:0.6rem;">Ready to own a timepiece?</h2>
+      <p style="color:rgba(255,255,255,0.7);margin-bottom:1.25rem;font-size:0.97rem;">Create an account to reserve, track orders, and get notified.</p>
+      <div style="display:flex;gap:0.85rem;justify-content:center;flex-wrap:wrap;">
+        <a class="btn btn-primary btn-lg" href="{% url 'register' %}">Get Started</a>
+        <a class="btn btn-lg" href="{% url 'login' %}" style="background:rgba(255,255,255,0.1);color:var(--white);border:1.5px solid rgba(255,255,255,0.3);">Log In</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

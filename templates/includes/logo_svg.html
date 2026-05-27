@@ -1,0 +1,47 @@
+{# Reusable SECONDS animated watch logo SVG #}
+{# Usage: {% include 'includes/logo_svg.html' with size="54" %} #}
+{% with w=size|default:"54" %}
+<svg width="{{ w }}" height="{{ w }}" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg"
+  style="filter:drop-shadow(0 0 4px rgba(201,168,76,0.3));flex-shrink:0;"
+  role="img" aria-label="SECONDS logo">
+  <defs>
+    <style>
+      .logo-sec-{{ w }}{transform-origin:21px 21px;animation:logoSec 60s steps(60) infinite;}
+      .logo-min-{{ w }}{transform-origin:21px 21px;animation:logoMin 3600s linear infinite;}
+      .logo-hr-{{ w }} {transform-origin:21px 21px;animation:logoHr  43200s linear infinite;}
+      @keyframes logoSec{to{transform:rotate(360deg)}}
+      @keyframes logoMin{from{transform:rotate(120deg)}to{transform:rotate(480deg)}}
+      @keyframes logoHr {from{transform:rotate(250deg)}to{transform:rotate(610deg)}}
+    </style>
+  </defs>
+  <circle cx="21" cy="21" r="19.5" fill="none" stroke="#9A7830" stroke-width="2.5"/>
+  <circle cx="21" cy="21" r="17" fill="#2D3142"/>
+  <g stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round">
+    <line x1="21" y1="5"  x2="21" y2="8"/>
+    <line x1="37" y1="21" x2="34" y2="21"/>
+    <line x1="21" y1="37" x2="21" y2="34"/>
+    <line x1="5"  y1="21" x2="8"  y2="21"/>
+  </g>
+  <g stroke="#C9A84C" stroke-width="0.8" stroke-linecap="round" opacity="0.45">
+    <line x1="29.2" y1="6.5"  x2="27.9" y2="9.2"/>
+    <line x1="35.5" y1="12.8" x2="32.8" y2="14.1"/>
+    <line x1="35.5" y1="29.2" x2="32.8" y2="27.9"/>
+    <line x1="29.2" y1="35.5" x2="27.9" y2="32.8"/>
+    <line x1="12.8" y1="35.5" x2="14.1" y2="32.8"/>
+    <line x1="6.5"  y1="29.2" x2="9.2"  y2="27.9"/>
+    <line x1="6.5"  y1="12.8" x2="9.2"  y2="14.1"/>
+    <line x1="12.8" y1="6.5"  x2="14.1" y2="9.2"/>
+  </g>
+  <g class="logo-hr-{{ w }}">
+    <line x1="21" y1="21" x2="14.5" y2="26" stroke="#E8CC7A" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <g class="logo-min-{{ w }}">
+    <line x1="21" y1="21" x2="21" y2="11" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+  </g>
+  <g class="logo-sec-{{ w }}">
+    <line x1="21" y1="23" x2="21" y2="7" stroke="#C9A84C" stroke-width="1" stroke-linecap="round"/>
+  </g>
+  <circle cx="21" cy="21" r="2.2" fill="#C9A84C"/>
+  <circle cx="21" cy="21" r="0.9" fill="#2D3142"/>
+</svg>
+{% endwith %}

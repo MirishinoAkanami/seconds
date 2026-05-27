@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Inventory — SECONDS{% endblock %}
+
+{% block sidebar %}
+<aside class="sidebar">
+  <div class="sidebar-label">Inventory Overview</div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--gold);">
+    <div class="sidebar-metric-label">Total Items</div>
+    <div class="sidebar-metric-value">{{ total_items }}</div>
+    <div class="sidebar-metric-sub">in inventory</div>
+  </div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--danger);">
+    <div class="sidebar-metric-label">Out of Stock</div>
+    <div class="sidebar-metric-value">{{ out_of_stock }}</div>
+    <div class="sidebar-metric-sub">need restocking</div>
+  </div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--warning);">
+    <div class="sidebar-metric-label">Low Stock</div>
+    <div class="sidebar-metric-value">{{ low_stock_count }}</div>
+    <div class="sidebar-metric-sub">running low</div>
+  </div>
+
+  <div class="sidebar-sep"></div>
+  <div class="sidebar-label">Filters</div>
+  <form method="get" style="display:flex;flex-direction:column;gap:0.5rem;">
+    <input type="text" name="q" class="form-input" value="{{ query }}" placeholder="Search…" style="font-size:0.88rem;padding:0.55rem 0.75rem;"/>
+    <select name="category" class="form-input" style="font-size:0.88rem;padding:0.55rem 0.75rem;">
+      <option value="">All Categories</option>
+      {% for val, label in categories %}
+        <option value="{{ val }}" {% if category_filter == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="stock" class="form-input" style="font-size:0.88rem;padding:0.55rem 0.75rem;">
+      <option value="">All Stock</option>
+      <option value="low" {% if stock_filter == 'low' %}selected{% endif %}>Low Stock</option>
+      <option value="out" {% if stock_filter == 'out' %}selected{% endif %}>Out of Stock</option>
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm">Apply Filter</button>
+    {% if query or category_filter or stock_filter %}
+    <a class="btn btn-ghost btn-sm" href="{% url 'inventory_list' %}">Clear</a>
+    {% endif %}
+  </form>
+
+  <div class="sidebar-sep"></div>
+  <a class="sidebar-btn cta" href="{% url 'item_add' %}">+ Add Item</a>
+  <a class="sidebar-btn" href="{% url 'dashboard' %}">← Dashboard</a>
+</aside>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>Sari-Sari Inventory</h1>
+    <p>Manage all store items, stock levels, and prices.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'item_add' %}">+ Add Item</a>
+</div>
+
+{% if items %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Photo</th><th>Item</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Quick Update</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td style="width:60px;">
+          {% if item.image %}
+            <img src="{{ item.image.url }}" alt="{{ item.name }}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);"/>
+          {% else %}
+            <div style="width:48px;height:48px;background:var(--cream-dark);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:var(--text-soft);">📦</div>
+          {% endif %}
+        </td>
+        <td style="font-weight:700;font-size:0.97rem;">{{ item.name }}</td>
+        <td><span class="badge badge-slate">{{ item.get_category_display }}</span></td>
+        <td style="font-weight:700;color:var(--gold-dark);font-size:0.97rem;">₱{{ item.price|floatformat:2 }}</td>
+        <td>
+          <span style="font-weight:800;font-size:1.05rem;{% if item.is_out_of_stock %}color:var(--danger);{% elif item.is_low_stock %}color:var(--warning);{% else %}color:var(--success);{% endif %}">
+            {{ item.stock_quantity }}
+          </span>
+          <span style="font-size:0.8rem;color:var(--text-soft);"> {{ item.unit }}</span>
+        </td>
+        <td>
+          {% if item.is_out_of_stock %}<span class="badge badge-danger">Out of Stock</span>
+          {% elif item.is_low_stock %}<span class="badge badge-warning">Low Stock</span>
+          {% else %}<span class="badge badge-success">OK</span>{% endif %}
+        </td>
+        <td>
+          <form method="post" action="{% url 'quick_stock_update' item.pk %}" style="display:flex;gap:0.35rem;align-items:center;">
+            {% csrf_token %}
+            <input type="number" name="quantity" value="1" min="1" class="form-input" style="width:58px;padding:0.35rem 0.45rem;font-size:0.88rem;"/>
+            <button name="action" value="add" class="btn btn-success btn-sm" title="Add stock">+</button>
+            <button name="action" value="remove" class="btn btn-danger btn-sm" title="Remove stock">−</button>
+          </form>
+        </td>
+        <td>
+          <div style="display:flex;gap:0.3rem;">
+            <a class="btn btn-ghost btn-sm" href="{% url 'item_edit' item.pk %}">Edit</a>
+            <form method="post" action="{% url 'item_delete' item.pk %}" onsubmit="return confirm('Delete {{ item.name }}?')">
+              {% csrf_token %}<button class="btn btn-danger btn-sm" type="submit">Del</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="icon">📦</div>
+  <h3>No Items Found</h3>
+  <p>{% if query %}No items matching "{{ query }}".{% else %}Inventory is empty. Start by adding items.{% endif %}</p>
+  <a class="btn btn-primary" href="{% url 'item_add' %}">Add First Item</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — SECONDS{% endblock %}
+{% block content %}
+<div class="form-page">
+  <div class="page-header">
+    <div class="page-header-text">
+      <h1>{{ title }}</h1>
+      <p>{% if item %}Update watch details and availability.{% else %}Add a new watch to the catalog.{% endif %}</p>
+    </div>
+    <a class="btn btn-ghost" href="{% url 'watch_list' %}">← Cancel</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Image Upload -->
+        <div class="form-group">
+          <label class="form-label">Watch Photo</label>
+          {% if item and item.image %}
+          <div style="margin-bottom:0.85rem;display:flex;align-items:center;gap:1rem;">
+            <img src="{{ item.image.url }}" alt="Current" style="height:90px;width:90px;object-fit:cover;border-radius:var(--radius);border:1.5px solid var(--border);"/>
+            <span style="font-size:0.95rem;color:var(--text-soft);">Current image — upload a new one to replace it.</span>
+          </div>
+          {% endif %}
+          <div class="img-upload-zone">
+            <input type="file" name="image" accept="image/*"/>
+            <div class="img-upload-icon">📷</div>
+            <div class="img-upload-text"><strong>Click to upload</strong> or drag &amp; drop<br/><span style="font-size:0.82rem;">JPG, PNG, WEBP recommended</span></div>
+          </div>
+          <div class="img-preview-wrap"><img src="" alt="Preview"/></div>
+        </div>
+
+        <div class="grid grid-2">
+          {% for field in form %}
+            {% if field.name != 'image' %}
+            <div class="form-group" {% if field.name == 'description' or field.name == 'is_available' %}style="grid-column:1/-1;"{% endif %}>
+              <label class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}{% for err in field.errors %}<div style="font-size:0.88rem;color:var(--danger);margin-top:0.25rem;">{{ err }}</div>{% endfor %}{% endif %}
+              {% if field.help_text %}<div class="form-hint">{{ field.help_text }}</div>{% endif %}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <div class="flex gap-2 mt-2">
+          <button type="submit" class="btn btn-primary btn-lg">{% if item %}Update Watch{% else %}Add Watch{% endif %}</button>
+          <a class="btn btn-ghost" href="{% url 'watch_list' %}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

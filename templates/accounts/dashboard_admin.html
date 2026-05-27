@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard — SECONDS{% endblock %}
+
+{% block sidebar %}
+<aside class="sidebar">
+  <a class="sidebar-btn cta" href="{% url 'sales_stats' %}">📊 Statistics</a>
+  <div class="sidebar-sep"></div>
+
+  <div class="sidebar-metric accent-gold" style="border-top:3px solid var(--gold);">
+    <div class="sidebar-metric-label">Watches on Sale</div>
+    <div class="sidebar-metric-value">{{ watches_on_sale }}</div>
+    <div class="sidebar-metric-sub">currently available</div>
+  </div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--info);">
+    <div class="sidebar-metric-label">Total Sari Items</div>
+    <div class="sidebar-metric-value">{{ total_sari }}</div>
+    <div class="sidebar-metric-sub">in inventory</div>
+  </div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--warning);">
+    <div class="sidebar-metric-label">Pending Orders</div>
+    <div class="sidebar-metric-value">{{ pending_orders }}</div>
+    <div class="sidebar-metric-sub"><a href="{% url 'orders' %}?status=pending" style="color:var(--gold-light);font-weight:700;">Review →</a></div>
+  </div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--danger);">
+    <div class="sidebar-metric-label">Watch Stock Issues</div>
+    <div class="sidebar-metric-value">{{ out_of_stock_watches.count }}</div>
+    <div class="sidebar-metric-sub">out of stock</div>
+  </div>
+
+  <div class="sidebar-sep"></div>
+  <div class="sidebar-label">Navigation</div>
+  <a class="sidebar-btn" href="{% url 'watch_list' %}">⌚ Watch Catalog</a>
+  <a class="sidebar-btn" href="{% url 'inventory_list' %}">📦 Inventory</a>
+  <a class="sidebar-btn" href="{% url 'orders' %}">🧾 All Orders</a>
+  <a class="sidebar-btn" href="{% url 'store_settings' %}">⚙ Settings</a>
+</aside>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>Admin Dashboard</h1>
+    <p>Welcome back, {{ user.first_name|default:user.username }}. Here's your store at a glance.</p>
+  </div>
+  <span class="clock-deco" id="liveClock" style="font-size:1.1rem;"></span>
+</div>
+
+<!-- Quick Actions -->
+<h2 class="section-title">Quick Actions</h2>
+<div style="display:flex;gap:0.85rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+  <a class="btn btn-primary btn-lg" href="{% url 'item_add' %}">+ Add Inventory Item</a>
+  <a class="btn btn-secondary btn-lg" href="{% url 'watch_add' %}">+ Add Watch</a>
+  <a class="btn btn-ghost btn-lg" href="{% url 'announcement_create' %}">📢 New Announcement</a>
+</div>
+
+<!-- Two column: Notice Board | Watch Stock Status -->
+<div class="grid grid-2">
+  <!-- Notice Board -->
+  <div class="card">
+    <div class="card-header">
+      📢 Notice Board
+      <a class="btn btn-primary btn-sm" href="{% url 'announcement_create' %}">+ New</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+      {% if announcements %}
+      <div style="max-height:380px;overflow-y:auto;">
+        {% for ann in announcements %}
+        <div style="padding:0.85rem 1.2rem;border-bottom:1.5px solid var(--cream-dark);">
+          <div class="flex-between" style="gap:0.5rem;">
+            <div style="font-weight:700;font-size:0.97rem;color:var(--slate);">
+              {% if ann.is_pinned %}<span style="color:var(--gold-dark);">📌 </span>{% endif %}{{ ann.title }}
+            </div>
+            <div style="display:flex;gap:0.3rem;flex-shrink:0;">
+              <a class="btn btn-ghost btn-sm" href="{% url 'announcement_edit' ann.pk %}">Edit</a>
+              <form method="post" action="{% url 'announcement_delete' ann.pk %}" style="display:inline;" onsubmit="return confirm('Delete?')">
+                {% csrf_token %}<button class="btn btn-danger btn-sm" type="submit">Del</button>
+              </form>
+            </div>
+          </div>
+          <div style="font-size:0.8rem;color:var(--text-soft);margin-top:0.15rem;">{{ ann.created_at|date:"M d, Y" }}</div>
+          <p style="font-size:0.9rem;color:var(--text-mid);margin-top:0.35rem;line-height:1.5;">{{ ann.content|truncatechars:120 }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:2.5rem;">
+        <div class="icon">📢</div>
+        <h3>No Announcements Yet</h3>
+        <p>Post something to the notice board for customers to see.</p>
+        <a class="btn btn-primary btn-sm" href="{% url 'announcement_create' %}">Post One</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Watch Stock Status -->
+  <div class="card">
+    <div class="card-header">
+      ⌚ Watch Stock Status
+      <a class="btn btn-primary btn-sm" href="{% url 'watch_add' %}">+ Add</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+      {% if out_of_stock_watches or low_stock_watches %}
+      <div style="max-height:380px;overflow-y:auto;">
+        {% for w in out_of_stock_watches %}
+        <div style="padding:0.8rem 1.2rem;border-bottom:1.5px solid var(--cream-dark);display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <div>
+            <div style="font-weight:700;font-size:0.95rem;color:var(--slate);">{{ w.name }}</div>
+            {% if w.brand %}<div style="font-size:0.78rem;color:var(--text-soft);">{{ w.brand }}</div>{% endif %}
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+            <span class="badge badge-danger">Out of Stock</span>
+            <a class="btn btn-ghost btn-sm" href="{% url 'watch_edit' w.pk %}">Edit</a>
+          </div>
+        </div>
+        {% endfor %}
+        {% for w in low_stock_watches %}
+        <div style="padding:0.8rem 1.2rem;border-bottom:1.5px solid var(--cream-dark);display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <div>
+            <div style="font-weight:700;font-size:0.95rem;color:var(--slate);">{{ w.name }}</div>
+            {% if w.brand %}<div style="font-size:0.78rem;color:var(--text-soft);">{{ w.brand }}</div>{% endif %}
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+            <span class="badge badge-warning">{{ w.stock_quantity }} left</span>
+            <a class="btn btn-ghost btn-sm" href="{% url 'watch_edit' w.pk %}">Edit</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:2.5rem;">
+        <div class="icon">✔</div>
+        <h3>All Watches Well Stocked</h3>
+        <p>No stock issues at the moment.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Low Stock Sari (if any) -->
+{% if low_stock_sari %}
+<h2 class="section-title mt-3">⚠ Low Stock — Sari-Sari Items</h2>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Item</th><th>Category</th><th>Stock</th><th>Threshold</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for item in low_stock_sari %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td><span class="badge badge-slate">{{ item.get_category_display }}</span></td>
+        <td><span class="badge badge-warning">{{ item.stock_quantity }}</span></td>
+        <td style="color:var(--text-soft);">{{ item.low_stock_threshold }}</td>
+        <td><a class="btn btn-ghost btn-sm" href="{% url 'item_edit' item.pk %}">Restock</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function updateClock(){document.getElementById('liveClock').textContent=new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+  updateClock(); setInterval(updateClock,1000);
+</script>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Logout — SECONDS{% endblock %}
+{% block content %}
+<div style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:2rem;">
+  <div class="card" style="max-width:400px;width:100%;">
+    <div class="card-body" style="padding:2.25rem;text-align:center;">
+      {% include 'includes/logo_svg.html' with size="64" %}
+      <h2 style="font-family:var(--font-serif);color:var(--slate);margin-bottom:0.45rem;font-size:1.75rem;">Log Out?</h2>
+      <p style="color:var(--text-soft);margin-bottom:1.65rem;font-size:1rem;">You'll be signed out of your SECONDS account.</p>
+      <form method="post" style="display:flex;gap:0.9rem;justify-content:center;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-lg">Yes, Log Out</button>
+        <a class="btn btn-ghost btn-lg" href="{% url 'dashboard' %}">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

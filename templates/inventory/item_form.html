@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — SECONDS{% endblock %}
+{% block content %}
+<div class="form-page">
+  <div class="page-header">
+    <div class="page-header-text">
+      <h1>{{ title }}</h1>
+      <p>{% if item %}Update item details and stock.{% else %}Add a new item to the sari-sari inventory.{% endif %}</p>
+    </div>
+    <a class="btn btn-ghost" href="{% url 'inventory_list' %}">← Cancel</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Image Upload -->
+        <div class="form-group">
+          <label class="form-label">Product Photo</label>
+          {% if item and item.image %}
+          <div style="margin-bottom:0.85rem;display:flex;align-items:center;gap:1rem;">
+            <img src="{{ item.image.url }}" alt="Current" style="height:80px;width:80px;object-fit:cover;border-radius:var(--radius);border:1.5px solid var(--border);"/>
+            <span style="font-size:0.95rem;color:var(--text-soft);">Current photo — upload a new one to replace.</span>
+          </div>
+          {% endif %}
+          <div class="img-upload-zone">
+            <input type="file" name="image" accept="image/*"/>
+            <div class="img-upload-icon">📷</div>
+            <div class="img-upload-text"><strong>Click to upload</strong> or drag &amp; drop<br/><span style="font-size:0.82rem;">JPG, PNG, WEBP</span></div>
+          </div>
+          <div class="img-preview-wrap"><img src="" alt="Preview"/></div>
+        </div>
+
+        <div class="grid grid-2">
+          {% for field in form %}
+            {% if field.name != 'image' %}
+            <div class="form-group">
+              <label class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}{% for err in field.errors %}<div style="font-size:0.88rem;color:var(--danger);margin-top:0.25rem;">{{ err }}</div>{% endfor %}{% endif %}
+              {% if field.help_text %}<div class="form-hint">{{ field.help_text }}</div>{% endif %}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        {% if item %}
+        <div class="form-group">
+          <label class="form-label">Stock Change Note</label>
+          <input type="text" name="stock_note" class="form-input" placeholder="Reason for stock change (optional)"/>
+        </div>
+        {% endif %}
+
+        <div class="flex gap-2 mt-2">
+          <button type="submit" class="btn btn-primary btn-lg">{% if item %}Update Item{% else %}Add to Inventory{% endif %}</button>
+          <a class="btn btn-ghost" href="{% url 'inventory_list' %}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if item and logs %}
+  <div class="card mt-2">
+    <div class="card-header">📋 Recent Stock History</div>
+    <div class="table-wrap" style="border:none;border-radius:0;">
+      <table>
+        <thead><tr><th>Action</th><th>Change</th><th>Notes</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td><span class="badge {% if log.action == 'add' %}badge-success{% elif log.action == 'remove' %}badge-danger{% else %}badge-info{% endif %}">{{ log.get_action_display }}</span></td>
+            <td style="font-weight:800;{% if log.quantity_changed > 0 %}color:var(--success);{% else %}color:var(--danger);{% endif %}">{% if log.quantity_changed > 0 %}+{% endif %}{{ log.quantity_changed }}</td>
+            <td style="color:var(--text-soft);">{{ log.notes|default:"—" }}</td>
+            <td style="font-size:0.88rem;color:var(--text-soft);">{{ log.created_at|date:"M d, Y g:i A" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

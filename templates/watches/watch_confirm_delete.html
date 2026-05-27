@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Delete Watch — SECONDS{% endblock %}
+{% block content %}
+<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:2rem;">
+  <div class="card" style="max-width:440px;width:100%;">
+    <div class="card-header" style="background:rgba(139,30,48,0.08);color:var(--danger);font-size:1.1rem;">⚠ Confirm Delete</div>
+    <div class="card-body">
+      <p style="font-size:1.05rem;color:var(--text-dark);margin-bottom:0.45rem;">Delete <strong>"{{ item.name }}"</strong>?</p>
+      <p style="font-size:0.97rem;color:var(--text-soft);margin-bottom:1.65rem;">This action cannot be undone.</p>
+      <form method="post" style="display:flex;gap:0.9rem;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        <a class="btn btn-ghost" href="{% url 'watch_list' %}">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% block title %}Sales Statistics — SECONDS{% endblock %}
+
+{% block sidebar %}
+<aside class="sidebar">
+  <div class="sidebar-label">All-Time Totals</div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--gold);">
+    <div class="sidebar-metric-label">Total Orders</div>
+    <div class="sidebar-metric-value">{{ total_orders }}</div>
+    <div class="sidebar-metric-sub">all time</div>
+  </div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--success);">
+    <div class="sidebar-metric-label">Verified Orders</div>
+    <div class="sidebar-metric-value">{{ total_verified }}</div>
+    <div class="sidebar-metric-sub">confirmed sales</div>
+  </div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--info);">
+    <div class="sidebar-metric-label">Total Revenue</div>
+    <div class="sidebar-metric-value" style="font-size:1.35rem;">₱{{ total_revenue|floatformat:2 }}</div>
+    <div class="sidebar-metric-sub">verified orders</div>
+  </div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--warning);">
+    <div class="sidebar-metric-label">Pending</div>
+    <div class="sidebar-metric-value">{{ pending_count }}</div>
+    <div class="sidebar-metric-sub"><a href="{% url 'orders' %}?status=pending" style="color:var(--gold-light);">Review →</a></div>
+  </div>
+
+  <div class="sidebar-sep"></div>
+  <div class="sidebar-label">Period</div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--info);">
+    <div class="sidebar-metric-label">Last 7 Days</div>
+    <div class="sidebar-metric-value">{{ week_orders }}</div>
+    <div class="sidebar-metric-sub">new orders</div>
+  </div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--success);">
+    <div class="sidebar-metric-label">30-Day Revenue</div>
+    <div class="sidebar-metric-value" style="font-size:1.3rem;">₱{{ recent_revenue|floatformat:2 }}</div>
+    <div class="sidebar-metric-sub">last 30 days</div>
+  </div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--success);">
+    <div class="sidebar-metric-label">Delivered</div>
+    <div class="sidebar-metric-value">{{ delivered_count }}</div>
+    <div class="sidebar-metric-sub">completed</div>
+  </div>
+
+  <div class="sidebar-metric" style="border-top:3px solid var(--danger);">
+    <div class="sidebar-metric-label">Cancelled / Rejected</div>
+    <div class="sidebar-metric-value">{{ cancelled_count }}</div>
+    <div class="sidebar-metric-sub">not completed</div>
+  </div>
+
+  <div class="sidebar-sep"></div>
+  <a class="sidebar-btn" href="{% url 'orders' %}">🧾 All Orders</a>
+  <a class="sidebar-btn" href="{% url 'dashboard' %}">← Dashboard</a>
+</aside>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>Sales Statistics</h1>
+    <p>Overview of orders, revenue, and customer trends.</p>
+  </div>
+</div>
+
+<!-- Recent Orders (middle) + Right panels -->
+<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:1.1rem;align-items:start;">
+
+  <!-- MIDDLE: Recent Orders -->
+  <div>
+    <h2 class="section-title">Recent Orders</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Customer</th><th>Watch</th><th>Payment</th><th>Total</th><th>Status</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+          {% for order in recent_list %}
+          <tr>
+            <td style="color:var(--text-soft);font-size:0.85rem;">{{ order.pk }}</td>
+            <td style="font-weight:600;">{{ order.user.username }}</td>
+            <td>{{ order.watch_item.name }}</td>
+            <td><span class="badge badge-slate">{{ order.get_payment_method_display }}</span></td>
+            <td style="font-weight:800;color:var(--gold-dark);">₱{{ order.total_amount|floatformat:2 }}</td>
+            <td>
+              <span class="badge {% if order.status == 'delivered' %}badge-success{% elif order.status == 'pending' %}badge-warning{% elif order.status in 'rejected,cancelled' %}badge-danger{% else %}badge-info{% endif %}">
+                {{ order.get_status_display }}
+              </span>
+            </td>
+            <td style="font-size:0.83rem;color:var(--text-soft);">{{ order.created_at|date:"M d, Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="text-center mt-2">
+      <a class="btn btn-ghost" href="{% url 'orders' %}">View All Orders →</a>
+    </div>
+  </div>
+
+  <!-- RIGHT: Top Watches + Breakdown -->
+  <div style="display:flex;flex-direction:column;gap:1.1rem;">
+
+    <!-- Top Watches -->
+    <div class="card">
+      <div class="card-header">🏆 Top Watches by Orders</div>
+      <div style="padding:0;">
+        {% if top_watches %}
+          {% for w in top_watches %}
+          <div style="padding:0.8rem 1.1rem;border-bottom:1.5px solid var(--cream-dark);display:flex;align-items:center;gap:0.75rem;">
+            <div style="font-family:var(--font-serif);font-size:1.1rem;color:var(--gold-dark);font-weight:700;width:22px;flex-shrink:0;">{{ forloop.counter }}</div>
+            {% if w.image %}
+              <img src="{{ w.image.url }}" alt="{{ w.name }}" style="width:42px;height:42px;object-fit:cover;border-radius:7px;border:1.5px solid var(--border);flex-shrink:0;"/>
+            {% else %}
+              <div style="width:42px;height:42px;background:var(--cream-dark);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">⌚</div>
+            {% endif %}
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:0.92rem;color:var(--slate);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ w.name }}</div>
+              <div style="font-size:0.78rem;color:var(--text-soft);">₱{{ w.price|floatformat:2 }}</div>
+            </div>
+            <span class="badge badge-gold" style="flex-shrink:0;">{{ w.order_count }}</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state" style="padding:1.5rem;"><p style="font-size:0.9rem;">No orders yet.</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Payment Breakdown -->
+    <div class="card">
+      <div class="card-header">💳 Payment Method</div>
+      <div class="card-body">
+        {% with total=gcash_count|add:shop_count %}
+        <div style="margin-bottom:0.85rem;">
+          <div class="flex-between" style="font-size:0.92rem;margin-bottom:0.35rem;">
+            <span style="font-weight:700;">GCash</span>
+            <span style="color:var(--text-soft);">{{ gcash_count }} orders</span>
+          </div>
+          <div style="height:11px;background:var(--cream-dark);border-radius:99px;overflow:hidden;">
+            <div style="height:100%;background:var(--gold);border-radius:99px;width:{% if total > 0 %}{% widthratio gcash_count total 100 %}{% else %}0{% endif %}%;"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex-between" style="font-size:0.92rem;margin-bottom:0.35rem;">
+            <span style="font-weight:700;">Pay at Shop</span>
+            <span style="color:var(--text-soft);">{{ shop_count }} orders</span>
+          </div>
+          <div style="height:11px;background:var(--cream-dark);border-radius:99px;overflow:hidden;">
+            <div style="height:100%;background:var(--slate);border-radius:99px;width:{% if total > 0 %}{% widthratio shop_count total 100 %}{% else %}0{% endif %}%;"></div>
+          </div>
+        </div>
+        {% endwith %}
+      </div>
+    </div>
+
+    <!-- Delivery Breakdown -->
+    <div class="card">
+      <div class="card-header">🛵 Delivery vs Pickup</div>
+      <div class="card-body">
+        {% with total=delivery_count|add:pickup_count %}
+        <div style="margin-bottom:0.85rem;">
+          <div class="flex-between" style="font-size:0.92rem;margin-bottom:0.35rem;">
+            <span style="font-weight:700;">Home Delivery</span>
+            <span style="color:var(--text-soft);">{{ delivery_count }} orders</span>
+          </div>
+          <div style="height:11px;background:var(--cream-dark);border-radius:99px;overflow:hidden;">
+            <div style="height:100%;background:var(--info);border-radius:99px;width:{% if total > 0 %}{% widthratio delivery_count total 100 %}{% else %}0{% endif %}%;"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex-between" style="font-size:0.92rem;margin-bottom:0.35rem;">
+            <span style="font-weight:700;">Store Pickup</span>
+            <span style="color:var(--text-soft);">{{ pickup_count }} orders</span>
+          </div>
+          <div style="height:11px;background:var(--cream-dark);border-radius:99px;overflow:hidden;">
+            <div style="height:100%;background:var(--success);border-radius:99px;width:{% if total > 0 %}{% widthratio pickup_count total 100 %}{% else %}0{% endif %}%;"></div>
+          </div>
+        </div>
+        {% endwith %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@media(max-width:900px){
+  div[style*="grid-template-columns:1.6fr 1fr"]{grid-template-columns:1fr!important;}
+}
+</style>
+{% endblock %}
