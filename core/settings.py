@@ -109,14 +109,14 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 cloudinary.config(
     cloud_name = 'dgthavlkr',
-    api_key    = os.environ.get('227773496557453'),
-    api_secret = os.environ.get('_QWFqIXb-u4cCisKJlj80s25Zv8'),
+    api_key    = '227773496557453',
+    api_secret = '_QWFqIXb-u4cCisKJlj80s25Zv8',
 )
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dgthavlkr',
-    'API_KEY':    os.environ.get('227773496557453'),
-    'API_SECRET': os.environ.get('_QWFqIXb-u4cCisKJlj80s25Zv8'),
+    'API_KEY':    '227773496557453',
+    'API_SECRET': '_QWFqIXb-u4cCisKJlj80s25Zv8',
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
