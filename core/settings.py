@@ -106,8 +106,14 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ── Media Files ───────────────────────────────────────────
+cloudinary.config(
+    cloud_name = os.environ.get('dgthavlkr'),
+    api_key    = os.environ.get('227773496557453'),
+    api_secret = os.environ.get('_QWFqIXb-u4cCisKJlj80s25Zv8'),
+)
+
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'CLOUD_NAME': os.environ.get('dgthavlkr'),
     'API_KEY':    os.environ.get('227773496557453'),
     'API_SECRET': os.environ.get('_QWFqIXb-u4cCisKJlj80s25Zv8'),
 }
@@ -115,7 +121,6 @@ CLOUDINARY_STORAGE = {
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
 
 # ── Auth ──────────────────────────────────────────────────
 AUTH_USER_MODEL = 'accounts.CustomUser'
