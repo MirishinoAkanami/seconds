@@ -106,14 +106,15 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ── Media Files ───────────────────────────────────────────
+
 cloudinary.config(
-    cloud_name = os.environ.get('dgthavlkr'),
+    cloud_name = 'dgthavlkr',
     api_key    = os.environ.get('227773496557453'),
     api_secret = os.environ.get('_QWFqIXb-u4cCisKJlj80s25Zv8'),
 )
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('dgthavlkr'),
+    'CLOUD_NAME': 'dgthavlkr',
     'API_KEY':    os.environ.get('227773496557453'),
     'API_SECRET': os.environ.get('_QWFqIXb-u4cCisKJlj80s25Zv8'),
 }
