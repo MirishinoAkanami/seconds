@@ -1,26 +1,16 @@
 {% extends 'base.html' %}
 {% block title %}Reserve {{ item.name }} — SECONDS{% endblock %}
 {% block content %}
-<div class="page-wrap" style="max-width:660px;">
-  <div class="mb-2"><a class="btn btn-ghost btn-sm" href="{% url 'watch_detail' item.pk %}">← Back to Watch</a></div>
-  <div class="page-header">
-    <div class="page-header-text"><h1>Reserve Watch</h1><p>Complete your reservation for <strong>{{ item.name }}</strong>.</p></div>
-  </div>
 
-  <!-- Watch Summary -->
-  <div class="card mb-2">
-    <div class="card-body" style="display:flex;gap:1rem;align-items:center;">
-      {% if item.image %}
-        <img src="{{ item.image.url }}" alt="{{ item.name }}" style="width:72px;height:72px;border-radius:var(--radius);object-fit:cover;border:1px solid var(--border);flex-shrink:0;"/>
-      {% else %}
-        <div style="width:72px;height:72px;border-radius:var(--radius);background:var(--cream-dark);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;">⌚</div>
-      {% endif %}
-      <div>
-        {% if item.brand %}<div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold-dark);">{{ item.brand }}</div>{% endif %}
-        <div style="font-family:var(--font-serif);font-size:1.15rem;color:var(--slate);">{{ item.name }}</div>
-        <div style="font-size:1.3rem;font-weight:800;color:var(--gold-dark);">₱{{ item.price|floatformat:2 }}</div>
-      </div>
-    </div>
+<div style="max-width:820px;margin:0 auto;">
+  <div class="mb-2"><a class="btn btn-ghost btn-sm" href="{% url 'watch_detail' item.pk %}">← Back to Watch</a></div>
+
+  <!-- Centered watch name header -->
+  <div style="text-align:center;margin-bottom:1.5rem;">
+    <h1 style="font-family:var(--font-serif);font-size:1.6rem;color:var(--slate);margin-bottom:0.25rem;">Reserve Watch</h1>
+    <p style="color:var(--text-soft);font-size:0.95rem;">Complete your reservation for <strong style="color:var(--gold-dark);">{{ item.name }}</strong></p>
+    {% if item.brand %}<p style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold-dark);">{{ item.brand }}</p>{% endif %}
+    <div style="font-size:1.5rem;font-weight:800;color:var(--gold-dark);margin-top:0.25rem;">₱{{ item.price|floatformat:2 }}</div>
   </div>
 
   <div class="card">
@@ -28,13 +18,13 @@
       <form method="post" enctype="multipart/form-data" id="orderForm">
         {% csrf_token %}
 
-        <!-- Payment -->
+        <!-- Payment Method selector -->
         <div class="form-group">
           <label class="form-label">Payment Method</label>
           <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
             <label style="flex:1;min-width:130px;cursor:pointer;">
               <input type="radio" name="payment_method" value="gcash" id="payGcash" onchange="togglePayment()" checked style="display:none;"/>
-              <div id="opt-gcash" style="border:2px solid var(--gold);border-radius:var(--radius);padding:0.9rem;text-align:center;background:rgba(201,168,76,0.08);transition:all 0.15s;">
+              <div id="opt-gcash" class="pay-opt pay-opt-active">
                 <div style="font-size:1.4rem;">💳</div>
                 <div style="font-weight:800;color:var(--slate);font-size:0.9rem;">GCash</div>
                 <div style="font-size:0.76rem;color:var(--text-soft);">Pay digitally</div>
@@ -42,7 +32,7 @@
             </label>
             <label style="flex:1;min-width:130px;cursor:pointer;">
               <input type="radio" name="payment_method" value="shop" id="payShop" onchange="togglePayment()" style="display:none;"/>
-              <div id="opt-shop" style="border:2px solid var(--border);border-radius:var(--radius);padding:0.9rem;text-align:center;transition:all 0.15s;">
+              <div id="opt-shop" class="pay-opt">
                 <div style="font-size:1.4rem;">🏪</div>
                 <div style="font-weight:800;color:var(--slate);font-size:0.9rem;">Pay at Shop</div>
                 <div style="font-size:0.76rem;color:var(--text-soft);">Pay on pickup</div>
@@ -51,88 +41,172 @@
           </div>
         </div>
 
-        <!-- GCash details -->
-        <div id="gcashSection" style="background:rgba(201,168,76,0.06);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:1rem;">
-          <div style="font-weight:800;color:var(--slate);margin-bottom:0.65rem;font-size:0.95rem;">📲 GCash Payment</div>
-          <div style="background:var(--white);border-radius:var(--radius);padding:0.8rem;margin-bottom:0.85rem;font-size:0.9rem;border:1px solid var(--border);display:flex;flex-direction:column;gap:0.25rem;">
-            <div>Send to: <strong style="color:var(--gold-dark);font-size:1rem;">{{ store.gcash_number }}</strong></div>
-            <div>Account: <strong>{{ store.gcash_name }}</strong></div>
-            <div>Amount: <strong style="color:var(--gold-dark);">₱{{ item.price|floatformat:2 }}</strong> + delivery if applicable</div>
+        <!-- GCash split panel (left: payment info, right: delivery + submit) -->
+        <div id="gcashLayout" style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;align-items:start;">
+
+          <!-- LEFT: GCash details -->
+          <div id="gcashSection" style="background:rgba(201,168,76,0.06);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;">
+            <div style="font-weight:800;color:var(--slate);margin-bottom:0.65rem;font-size:0.95rem;">📲 GCash Payment</div>
+            <div style="background:var(--white);border-radius:var(--radius);padding:0.8rem;margin-bottom:0.85rem;font-size:0.9rem;border:1px solid var(--border);display:flex;flex-direction:column;gap:0.25rem;">
+              <div>Send to: <strong style="color:var(--gold-dark);font-size:1rem;">{{ store.gcash_number }}</strong></div>
+              <div>Account: <strong>{{ store.gcash_name }}</strong></div>
+              <div>Amount: <strong style="color:var(--gold-dark);">₱{{ item.price|floatformat:2 }}</strong> + delivery if applicable</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">GCash Reference Number</label>
+              <input type="text" name="gcash_ref_number" class="form-input" placeholder="e.g. 1234567890"/>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Payment Screenshot (optional)</label>
+              <div class="img-upload-zone"><input type="file" name="gcash_screenshot" accept="image/*"/><div class="img-upload-icon">📷</div><div class="img-upload-text"><strong>Upload screenshot</strong></div></div>
+              <div class="img-preview-wrap"><img src="" alt="Preview"/></div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Delivery + Total + Submit -->
+          <div style="display:flex;flex-direction:column;gap:0.85rem;">
+            <!-- Delivery option -->
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Pickup / Delivery Option</label>
+              <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+                <label style="flex:1;min-width:110px;cursor:pointer;">
+                  <input type="radio" name="delivery_option" value="pickup" id="pickupOpt" onchange="toggleDelivery()" checked style="display:none;"/>
+                  <div id="opt-pickup" class="pay-opt pay-opt-active" style="padding:0.75rem;">
+                    <div style="font-size:1.2rem;">🏪</div>
+                    <div style="font-weight:800;font-size:0.85rem;color:var(--slate);">Store Pickup</div>
+                    <div style="font-size:0.72rem;color:var(--text-soft);">No delivery fee</div>
+                  </div>
+                </label>
+                <label style="flex:1;min-width:110px;cursor:pointer;">
+                  <input type="radio" name="delivery_option" value="delivery" id="deliveryOpt" onchange="toggleDelivery()" style="display:none;"/>
+                  <div id="opt-delivery" class="pay-opt" style="padding:0.75rem;">
+                    <div style="font-size:1.2rem;">🛵</div>
+                    <div style="font-weight:800;font-size:0.85rem;color:var(--slate);">Home Delivery</div>
+                    <div style="font-size:0.72rem;color:var(--text-soft);">+₱{{ store.delivery_fee|floatformat:2 }}</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div id="deliverySection" style="display:none;" class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Delivery Address</label>
+              <textarea name="delivery_address" class="form-input" rows="2" placeholder="Full delivery address…">{{ user.address }}</textarea>
+              <div class="form-hint">Within: {{ store.delivery_area }}</div>
+            </div>
+
+            <!-- Total summary -->
+            <div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--radius);padding:0.9rem;">
+              <div style="display:flex;justify-content:space-between;font-size:0.9rem;color:var(--text-mid);margin-bottom:0.3rem;"><span>Watch Price</span><span>₱{{ item.price|floatformat:2 }}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:0.9rem;color:var(--text-mid);margin-bottom:0.4rem;"><span>Delivery Fee</span><span id="feeAmt">₱0.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:800;color:var(--gold-dark);border-top:1px solid var(--border);padding-top:0.4rem;"><span>Total</span><span id="totalAmt">₱{{ item.price|floatformat:2 }}</span></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Notes (optional)</label>
+              <textarea name="notes" class="form-input" rows="2" placeholder="Any special requests…"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg btn-block">⌚ Submit Reservation</button>
+            <p style="font-size:0.78rem;color:var(--text-soft);text-align:center;margin-top:0.25rem;">We'll review and contact you to confirm.</p>
+          </div>
+
+        </div>
+
+        <!-- Non-GCash layout: just delivery + submit stacked normally -->
+        <div id="shopLayout" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Pickup / Delivery Option</label>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+              <label style="flex:1;min-width:130px;cursor:pointer;">
+                <input type="radio" name="delivery_option" value="pickup" id="pickupOpt2" onchange="toggleDelivery2()" checked style="display:none;"/>
+                <div id="opt-pickup2" class="pay-opt pay-opt-active">
+                  <div style="font-size:1.4rem;">🏪</div>
+                  <div style="font-weight:800;font-size:0.9rem;color:var(--slate);">Store Pickup</div>
+                  <div style="font-size:0.76rem;color:var(--text-soft);">No delivery fee</div>
+                </div>
+              </label>
+              <label style="flex:1;min-width:130px;cursor:pointer;">
+                <input type="radio" name="delivery_option" value="delivery" id="deliveryOpt2" onchange="toggleDelivery2()" style="display:none;"/>
+                <div id="opt-delivery2" class="pay-opt">
+                  <div style="font-size:1.4rem;">🛵</div>
+                  <div style="font-weight:800;font-size:0.9rem;color:var(--slate);">Home Delivery</div>
+                  <div style="font-size:0.76rem;color:var(--text-soft);">+₱{{ store.delivery_fee|floatformat:2 }} · {{ store.delivery_area }}</div>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div id="deliverySection2" style="display:none;" class="form-group">
+            <label class="form-label">Delivery Address</label>
+            <textarea name="delivery_address2" class="form-input" rows="2" placeholder="Full delivery address…">{{ user.address }}</textarea>
+            <div class="form-hint">Within: {{ store.delivery_area }}</div>
+          </div>
+          <div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--radius);padding:0.9rem;margin:0.85rem 0;">
+            <div style="display:flex;justify-content:space-between;font-size:0.9rem;color:var(--text-mid);margin-bottom:0.3rem;"><span>Watch Price</span><span>₱{{ item.price|floatformat:2 }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:0.9rem;color:var(--text-mid);margin-bottom:0.4rem;"><span>Delivery Fee</span><span id="feeAmt2">₱0.00</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:800;color:var(--gold-dark);border-top:1px solid var(--border);padding-top:0.4rem;"><span>Total</span><span id="totalAmt2">₱{{ item.price|floatformat:2 }}</span></div>
           </div>
           <div class="form-group">
-            <label class="form-label">GCash Reference Number</label>
-            <input type="text" name="gcash_ref_number" class="form-input" placeholder="e.g. 1234567890"/>
+            <label class="form-label">Notes (optional)</label>
+            <textarea name="notes2" class="form-input" rows="2" placeholder="Any special requests…"></textarea>
           </div>
-          <div class="form-group">
-            <label class="form-label">Payment Screenshot (optional)</label>
-            <div class="img-upload-zone"><input type="file" name="gcash_screenshot" accept="image/*"/><div class="img-upload-icon">📷</div><div class="img-upload-text"><strong>Upload screenshot</strong></div></div>
-            <div class="img-preview-wrap"><img src="" alt="Preview"/></div>
-          </div>
+          <button type="submit" class="btn btn-primary btn-lg btn-block">⌚ Submit Reservation</button>
+          <p style="font-size:0.78rem;color:var(--text-soft);text-align:center;margin-top:0.5rem;">We'll review and contact you to confirm.</p>
         </div>
 
-        <!-- Delivery -->
-        <div class="form-group">
-          <label class="form-label">Pickup / Delivery Option</label>
-          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-            <label style="flex:1;min-width:130px;cursor:pointer;">
-              <input type="radio" name="delivery_option" value="pickup" id="pickupOpt" onchange="toggleDelivery()" checked style="display:none;"/>
-              <div id="opt-pickup" style="border:2px solid var(--gold);border-radius:var(--radius);padding:0.9rem;text-align:center;background:rgba(201,168,76,0.08);transition:all 0.15s;">
-                <div style="font-size:1.4rem;">🏪</div>
-                <div style="font-weight:800;font-size:0.9rem;color:var(--slate);">Store Pickup</div>
-                <div style="font-size:0.76rem;color:var(--text-soft);">No delivery fee</div>
-              </div>
-            </label>
-            <label style="flex:1;min-width:130px;cursor:pointer;">
-              <input type="radio" name="delivery_option" value="delivery" id="deliveryOpt" onchange="toggleDelivery()" style="display:none;"/>
-              <div id="opt-delivery" style="border:2px solid var(--border);border-radius:var(--radius);padding:0.9rem;text-align:center;transition:all 0.15s;">
-                <div style="font-size:1.4rem;">🛵</div>
-                <div style="font-weight:800;font-size:0.9rem;color:var(--slate);">Home Delivery</div>
-                <div style="font-size:0.76rem;color:var(--text-soft);">+₱{{ store.delivery_fee|floatformat:2 }} · {{ store.delivery_area }}</div>
-              </div>
-            </label>
-          </div>
-        </div>
-        <div id="deliverySection" style="display:none;" class="form-group">
-          <label class="form-label">Delivery Address</label>
-          <textarea name="delivery_address" class="form-input" rows="2" placeholder="Full delivery address…">{{ user.address }}</textarea>
-          <div class="form-hint">Within: {{ store.delivery_area }}</div>
-        </div>
-
-        <!-- Total -->
-        <div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--radius);padding:0.9rem;margin:0.85rem 0;">
-          <div style="display:flex;justify-content:space-between;font-size:0.9rem;color:var(--text-mid);margin-bottom:0.3rem;"><span>Watch Price</span><span>₱{{ item.price|floatformat:2 }}</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:0.9rem;color:var(--text-mid);margin-bottom:0.4rem;"><span>Delivery Fee</span><span id="feeAmt">₱0.00</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:800;color:var(--gold-dark);border-top:1px solid var(--border);padding-top:0.4rem;"><span>Total</span><span id="totalAmt">₱{{ item.price|floatformat:2 }}</span></div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Notes (optional)</label>
-          <textarea name="notes" class="form-input" rows="2" placeholder="Any special requests…"></textarea>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-lg btn-block">⌚ Submit Reservation</button>
-        <p style="font-size:0.78rem;color:var(--text-soft);text-align:center;margin-top:0.5rem;">We'll review and contact you to confirm.</p>
       </form>
     </div>
   </div>
 </div>
+
+<style>
+.pay-opt {
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem;
+  text-align: center;
+  transition: all 0.15s;
+}
+.pay-opt-active {
+  border-color: var(--gold) !important;
+  background: rgba(201,168,76,0.08);
+}
+@media (max-width: 700px) {
+  #gcashLayout {
+    grid-template-columns: 1fr !important;
+  }
+}
+</style>
+
 {% block extra_js %}
 <script>
   const wPrice = {{ item.price }}, dFee = {{ store.delivery_fee }};
+
   function togglePayment() {
     const g = document.getElementById('payGcash').checked;
-    document.getElementById('gcashSection').style.display = g ? 'block' : 'none';
-    document.getElementById('opt-gcash').style.cssText = g ? 'border:2px solid var(--gold);border-radius:var(--radius);padding:0.9rem;text-align:center;background:rgba(201,168,76,0.08);transition:all 0.15s;' : 'border:2px solid var(--border);border-radius:var(--radius);padding:0.9rem;text-align:center;transition:all 0.15s;';
-    document.getElementById('opt-shop').style.cssText = !g ? 'border:2px solid var(--gold);border-radius:var(--radius);padding:0.9rem;text-align:center;background:rgba(201,168,76,0.08);transition:all 0.15s;' : 'border:2px solid var(--border);border-radius:var(--radius);padding:0.9rem;text-align:center;transition:all 0.15s;';
+    document.getElementById('gcashLayout').style.display = g ? 'grid' : 'none';
+    document.getElementById('shopLayout').style.display = g ? 'none' : 'block';
+    document.getElementById('opt-gcash').className = g ? 'pay-opt pay-opt-active' : 'pay-opt';
+    document.getElementById('opt-shop').className = g ? 'pay-opt' : 'pay-opt pay-opt-active';
   }
+
   function toggleDelivery() {
     const d = document.getElementById('deliveryOpt').checked;
     document.getElementById('deliverySection').style.display = d ? 'block' : 'none';
-    document.getElementById('opt-delivery').style.cssText = d ? 'border:2px solid var(--gold);border-radius:var(--radius);padding:0.9rem;text-align:center;background:rgba(201,168,76,0.08);transition:all 0.15s;' : 'border:2px solid var(--border);border-radius:var(--radius);padding:0.9rem;text-align:center;transition:all 0.15s;';
-    document.getElementById('opt-pickup').style.cssText = !d ? 'border:2px solid var(--gold);border-radius:var(--radius);padding:0.9rem;text-align:center;background:rgba(201,168,76,0.08);transition:all 0.15s;' : 'border:2px solid var(--border);border-radius:var(--radius);padding:0.9rem;text-align:center;transition:all 0.15s;';
+    document.getElementById('opt-delivery').className = d ? 'pay-opt pay-opt-active' : 'pay-opt';
+    document.getElementById('opt-pickup').className = d ? 'pay-opt' : 'pay-opt pay-opt-active';
     const fee = d ? dFee : 0;
     document.getElementById('feeAmt').textContent = '₱' + fee.toFixed(2);
     document.getElementById('totalAmt').textContent = '₱' + (wPrice + fee).toFixed(2);
+  }
+
+  function toggleDelivery2() {
+    const d = document.getElementById('deliveryOpt2').checked;
+    document.getElementById('deliverySection2').style.display = d ? 'block' : 'none';
+    document.getElementById('opt-delivery2').className = d ? 'pay-opt pay-opt-active' : 'pay-opt';
+    document.getElementById('opt-pickup2').className = d ? 'pay-opt' : 'pay-opt pay-opt-active';
+    const fee = d ? dFee : 0;
+    document.getElementById('feeAmt2').textContent = '₱' + fee.toFixed(2);
+    document.getElementById('totalAmt2').textContent = '₱' + (wPrice + fee).toFixed(2);
   }
 </script>
 {% endblock %}

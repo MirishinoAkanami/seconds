@@ -4,7 +4,7 @@
 <div class="page-header">
   <div class="page-header-text">
     <h1>Hello, {{ user.first_name|default:user.username }}! 👋</h1>
-    <p>Welcome to SECONDS — EJ&amp;ELLA Store.</p>
+    <p>Welcome to SECONDS — EJ&AMP;ELLA Store.</p>
   </div>
 </div>
 
@@ -15,36 +15,72 @@
   <a class="btn btn-ghost" href="{% url 'my_orders' %}">📦 My Orders</a>
 </div>
 
-<!-- Three-column layout: Notice Board | Featured Watches | Recent Orders -->
-<div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:1.1rem;align-items:start;">
+<!-- Layout: Left column (Recent Orders + Notice Board) | Right column (Featured Watches) -->
+<div style="display:grid;grid-template-columns:1fr 2.2fr;gap:1.1rem;align-items:start;">
 
-  <!-- LEFT: Notice Board -->
-  <div class="card">
-    <div class="card-header">📢 Notice Board</div>
-    <div style="padding:0;">
-      {% if announcements %}
-        {% for ann in announcements %}
-        <div style="padding:0.9rem 1.1rem;border-bottom:1.5px solid var(--cream-dark);">
-          <div class="flex-between mb-1" style="gap:0.4rem;">
-            <strong style="color:var(--slate);font-size:0.95rem;line-height:1.3;">
-              {% if ann.is_pinned %}<span style="color:var(--gold-dark);">📌 </span>{% endif %}{{ ann.title }}
-            </strong>
-            <span style="font-size:0.75rem;color:var(--text-soft);flex-shrink:0;">{{ ann.created_at|date:"M d" }}</span>
+  <!-- LEFT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:1.1rem;">
+
+    <!-- Recent Orders (TOP of left column) -->
+    <div class="card">
+      <div class="card-header">
+        🧾 Recent Orders
+        <a class="btn btn-ghost btn-sm" href="{% url 'my_orders' %}">All</a>
+      </div>
+      <div style="padding:0;">
+        {% if my_orders %}
+          {% for order in my_orders %}
+          <div style="padding:0.8rem 1.1rem;border-bottom:1.5px solid var(--cream-dark);">
+            <div class="flex-between" style="gap:0.4rem;">
+              <span style="font-weight:700;font-size:0.9rem;color:var(--slate);line-height:1.3;">{{ order.watch_item.name }}</span>
+              <span class="badge {% if order.status == 'delivered' %}badge-success{% elif order.status == 'pending' %}badge-warning{% elif order.status == 'rejected' or order.status == 'cancelled' %}badge-danger{% else %}badge-info{% endif %}" style="flex-shrink:0;">
+                {{ order.get_status_display }}
+              </span>
+            </div>
+            <div style="font-size:0.78rem;color:var(--text-soft);margin-top:0.15rem;">
+              ₱{{ order.total_amount|floatformat:2 }} · {{ order.created_at|date:"M d, Y" }}
+            </div>
           </div>
-          <p style="font-size:0.88rem;color:var(--text-mid);line-height:1.5;">{{ ann.content|truncatechars:120 }}</p>
-          {% if ann.image %}<img src="{{ ann.image.url }}" alt="{{ ann.title }}" style="width:100%;border-radius:var(--radius);margin-top:0.6rem;max-height:130px;object-fit:cover;"/>{% endif %}
-        </div>
-        {% endfor %}
-      {% else %}
-        <div class="empty-state" style="padding:2rem;">
-          <div class="icon" style="font-size:2rem;">📢</div>
-          <p style="font-size:0.88rem;">No announcements yet.</p>
-        </div>
-      {% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="empty-state" style="padding:2rem;">
+            <div class="icon" style="font-size:2rem;">📦</div>
+            <p style="font-size:0.88rem;">No orders yet.</p>
+            <a class="btn btn-primary btn-sm" href="{% url 'watch_list' %}">Browse</a>
+          </div>
+        {% endif %}
+      </div>
     </div>
+
+    <!-- Notice Board (BELOW Recent Orders) -->
+    <div class="card">
+      <div class="card-header">📢 Notice Board</div>
+      <div style="padding:0;">
+        {% if announcements %}
+          {% for ann in announcements %}
+          <div style="padding:0.9rem 1.1rem;border-bottom:1.5px solid var(--cream-dark);">
+            <div class="flex-between mb-1" style="gap:0.4rem;">
+              <strong style="color:var(--slate);font-size:0.95rem;line-height:1.3;">
+                {% if ann.is_pinned %}<span style="color:var(--gold-dark);">📌 </span>{% endif %}{{ ann.title }}
+              </strong>
+              <span style="font-size:0.75rem;color:var(--text-soft);flex-shrink:0;">{{ ann.created_at|date:"M d" }}</span>
+            </div>
+            <p style="font-size:0.88rem;color:var(--text-mid);line-height:1.5;">{{ ann.content|truncatechars:120 }}</p>
+            {% if ann.image %}<img src="{{ ann.image.url }}" alt="{{ ann.title }}" style="width:100%;border-radius:var(--radius);margin-top:0.6rem;max-height:130px;object-fit:cover;"/>{% endif %}
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state" style="padding:2rem;">
+            <div class="icon" style="font-size:2rem;">📢</div>
+            <p style="font-size:0.88rem;">No announcements yet.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
   </div>
 
-  <!-- MIDDLE: Featured Watches -->
+  <!-- RIGHT COLUMN: Featured Watches (takes full right space) -->
   <div>
     {% if featured %}
     <h2 class="section-title">New Arrivals</h2>
@@ -52,7 +88,7 @@
       {% for item in featured %}
       <div class="watch-card">
         <div class="watch-card-img">
-          {% if item.image %}<img src="{{ item.image.url }}" alt="{{ item.name }}"/>
+          {% if item.image %}<img src="{{ item.image.url }}" alt="{{ item.name }}" style="width:100%;height:100%;object-fit:cover;"/>
           {% else %}<div class="no-img">⌚</div>{% endif %}
           <div style="position:absolute;top:0.5rem;left:0.5rem;">
             <span class="badge badge-slate">{{ item.get_condition_display }}</span>
@@ -82,45 +118,12 @@
     {% endif %}
   </div>
 
-  <!-- RIGHT: Recent Orders -->
-  <div class="card">
-    <div class="card-header">
-      🧾 Recent Orders
-      <a class="btn btn-ghost btn-sm" href="{% url 'my_orders' %}">All</a>
-    </div>
-    <div style="padding:0;">
-      {% if my_orders %}
-        {% for order in my_orders %}
-        <div style="padding:0.8rem 1.1rem;border-bottom:1.5px solid var(--cream-dark);">
-          <div class="flex-between" style="gap:0.4rem;">
-            <span style="font-weight:700;font-size:0.9rem;color:var(--slate);line-height:1.3;">{{ order.watch_item.name }}</span>
-            <span class="badge {% if order.status == 'delivered' %}badge-success{% elif order.status == 'pending' %}badge-warning{% elif order.status == 'rejected' or order.status == 'cancelled' %}badge-danger{% else %}badge-info{% endif %}" style="flex-shrink:0;">
-              {{ order.get_status_display }}
-            </span>
-          </div>
-          <div style="font-size:0.78rem;color:var(--text-soft);margin-top:0.15rem;">
-            ₱{{ order.total_amount|floatformat:2 }} · {{ order.created_at|date:"M d, Y" }}
-          </div>
-        </div>
-        {% endfor %}
-      {% else %}
-        <div class="empty-state" style="padding:2rem;">
-          <div class="icon" style="font-size:2rem;">📦</div>
-          <p style="font-size:0.88rem;">No orders yet.</p>
-          <a class="btn btn-primary btn-sm" href="{% url 'watch_list' %}">Browse</a>
-        </div>
-      {% endif %}
-    </div>
-  </div>
-
 </div>
 
-@media (max-width: 900px) {
-  .user-grid { grid-template-columns: 1fr !important; }
-}
 <style>
+/* Responsive: stack to single column on smaller screens */
 @media (max-width: 900px) {
-  div[style*="grid-template-columns:1fr 2fr 1fr"] {
+  div[style*="grid-template-columns:1fr 2.2fr"] {
     grid-template-columns: 1fr !important;
   }
 }
