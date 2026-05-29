@@ -84,7 +84,7 @@
   <div>
     {% if featured %}
     <h2 class="section-title">New Arrivals</h2>
-    <div class="grid grid-2">
+    <div class="grid grid-3 dashboard-watch-grid">
       {% for item in featured %}
       <div class="watch-card">
         <div class="watch-card-img">
@@ -127,5 +127,10 @@
     grid-template-columns: 1fr !important;
   }
 }
+/* Smaller text for 3-col watch cards in dashboard */
+.dashboard-watch-grid .watch-card-name { font-size: 0.95rem; }
+.dashboard-watch-grid .watch-card-price { font-size: 1.1rem; }
+.dashboard-watch-grid .watch-card-body { padding: 0.7rem; gap: 0.2rem; }
+.dashboard-watch-grid .watch-card-footer { padding: 0.55rem 0.7rem; }
 </style>
 {% endblock %}
